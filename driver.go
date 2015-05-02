@@ -1,10 +1,11 @@
 package gomysql
 
 import (
+	"crypto/tls"
 	"database/sql/driver"
 	"fmt"
-	"net"
 	"net/url"
+	"strconv"
 	"strings"
 )
 
@@ -28,23 +29,76 @@ func (this *myDirver) open(dsn string) (*connection, error) {
 	if u, err := url.Parse(dsn); err != nil {
 		return nil, fmt.Errorf("Parse DSN err:%v", err)
 	} else {
-		fmt.Println(u.Scheme)
-		fmt.Println(u.User)
-		fmt.Println(u.User.Username())
-		p, _ := u.User.Password()
-		fmt.Println(p)
-		fmt.Println(u.Host)
-		host, port, _ := net.SplitHostPort(u.Host)
-		fmt.Println(host)
-		fmt.Println(port)
-		fmt.Println(u.Path)
-		fmt.Println(u.Fragment)
-		fmt.Println(u.RawQuery)
-		m, _ := url.ParseQuery(u.RawQuery)
-		fmt.Println(m)
-		for k, v := range m {
-			fmt.Printf("k=%s, v=%s \n", k, v)
+		cfg := &config{ // default config
+			socket:    "/var/run/mysqld/mysqld.sock",
+			host:      "localhost",
+			port:      3306,
+			user:      "root",
+			collation: defaultCollation,
 		}
+		// only support mysql and mysqls
+		// maybe support other database later
+		switch u.Scheme {
+		case "mysql":
+		case "mysqls":
+			cfg.tls = &tls.Config{}
+		default:
+			return nil, fmt.Errorf("invalid scheme: %s", dsn)
+		}
+
+		// other option will be support
+		for k, v := range u.Query() {
+			switch k {
+			case "debug":
+				cfg.debug = true
+			case "skip-verify":
+				if cfg.tls != nil {
+					cfg.tls.InsecureSkipVerify = true
+				}
+			case "allow-insecure-local-infile":
+				cfg.allowLocalInfile = true
+			case "charset":
+				cfg.collation = collations[v[0]]
+			case "socket":
+				cfg.socket = v[0]
+			case "strict":
+				cfg.strict = true
+			default:
+				return nil, fmt.Errorf("invalid parameter: %s", k)
+			}
+		}
+
+		if len(u.Host) > 0 {
+			host_port := strings.SplitN(u.Host, ":", 2)
+			cfg.host = host_port[0]
+
+			if len(host_port) == 2 {
+				cfg.port, err = strconv.Atoi(host_port[1])
+				if err != nil {
+					return nil, fmt.Errorf("invalid port: %s", dsn)
+				}
+			}
+		}
+
+		if u.User != nil {
+			cfg.user = u.User.Username()
+			if p, ok := u.User.Password(); ok {
+				cfg.passwd = p
+			}
+		}
+
+		// database name
+		if len(u.Path) > 0 {
+			path := strings.SplitN(u.Path, "/", 2)
+			cfg.dbname = path[1]
+		}
+
+		if u.Host == "(unix)" {
+			cfg.net = "unix"
+		} else {
+			cfg.net = "tcp"
+		}
+
 	}
 	return &connection{}, nil
 }

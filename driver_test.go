@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	dsn = "mysql://gopher2:secret@localhost:3306/test?strict&client-multi-results"
+	dsn = "mysql://gopher2:secret@localhost:3306/test?strict"
 )
 
 func TestOpen(t *testing.T) {

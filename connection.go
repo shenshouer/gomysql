@@ -2,9 +2,12 @@ package gomysql
 
 import (
 	"database/sql/driver"
+	"net"
 )
 
 type connection struct {
+	conn *net.Conn
+	cfg  *config
 }
 
 func (this *connection) Prepare(query string) (driver.Stmt, error) {
