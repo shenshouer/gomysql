@@ -42,7 +42,7 @@ func (this *myDirver) open(dsn string) (*connection, error) {
 	return nil, nil
 }
 
-func (this myDirver) parseDSN() (cfg *config, err error) {
+func (this myDirver) parseDSN(dsn string) (cfg *config, err error) {
 	cfg = &config{ // default config
 		socket:    "/var/run/mysqld/mysqld.sock",
 		host:      "localhost",
