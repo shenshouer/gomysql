@@ -19,4 +19,5 @@ type config struct {
 	debug            bool          // debug mode
 	strict           bool          // strict mode
 	allowLocalInfile bool          //
+	clientFoundRows  bool
 }
