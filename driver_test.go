@@ -11,7 +11,7 @@ const (
 )
 
 func TestOpen(t *testing.T) {
-	db, err := sql.Open("mysql", dsn2)
+	db, err := sql.Open("mysql", dsn1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -20,6 +20,13 @@ func TestOpen(t *testing.T) {
 	if rows, err := db.Query("select * from tbl1"); err != nil {
 		t.Fatal(err)
 	} else {
-		t.Log(rows)
+		logger.Info(rows)
+		strs, err := rows.Columns()
+		if err != nil {
+			t.Fatal(err)
+		}
+		for i := range strs {
+			t.Log(strs[i])
+		}
 	}
 }

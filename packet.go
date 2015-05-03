@@ -37,6 +37,7 @@ func readHeader(r io.Reader, seq byte) (int, error) {
 
 func (p *packet) recv(r io.Reader, seq byte) (byte, error) {
 	size, err := readHeader(r, seq)
+
 	if err != nil {
 		return 0, err
 	}
@@ -44,6 +45,7 @@ func (p *packet) recv(r io.Reader, seq byte) (byte, error) {
 	if _, err = io.ReadFull(r, buf); err != nil {
 		return 0, err
 	}
+
 	for size == MAX_PACKET_SIZE {
 		seq += 1
 		if size, err = readHeader(r, seq); err != nil {
@@ -56,11 +58,13 @@ func (p *packet) recv(r io.Reader, seq byte) (byte, error) {
 			copy(t, buf)
 			buf = t
 		}
+
 		buf = buf[:n]
 		if _, err = io.ReadFull(r, buf[m:n]); err != nil {
 			return 0, err
 		}
 	}
+
 	p.Buffer = *bytes.NewBuffer(buf)
 	return seq + 1, nil
 }

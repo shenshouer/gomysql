@@ -4,12 +4,27 @@ import (
 	"database/sql/driver"
 )
 
+type column struct {
+	tableName string
+	name      string
+	charset   uint16
+	length    uint32
+	coltype   byte
+	flags     uint16
+	decimals  byte
+}
+
 type rows struct {
+	conn    *connection
+	columns []column
 }
 
 func (this *rows) Columns() []string {
-	logger.Info("rows.Columns")
-	return nil
+	c := make([]string, len(this.columns))
+	for i, col := range this.columns {
+		c[i] = col.name
+	}
+	return c
 }
 
 func (this *rows) Close() error {
